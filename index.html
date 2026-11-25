@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <title>Daily Comics</title>
+
+  <!-- iOS Home Screen Web App Configuration -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Daily Comics" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#FAF7F0" />
+
+  <!-- Apple Touch Icon & Web Manifest -->
+  <link id="appleTouchIcon" rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link id="webManifest" rel="manifest" href="" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            paper: '#FAF7F0',
+            card: '#FFFFFF',
+            ink: '#18181B',
+            muted: '#52525B',
+            peanuts: '#FACC15',
+            garfield: '#FB923C',
+            calvin: '#F87171',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Clean Child-Friendly Geometric Sans Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* Full-Screen Native Phone App Shell */
+    html,
+    body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #FAF7F0;
+      color: #18181B;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    /* Safe-Area Insets for iPhone Notch & Home Indicator */
+    .safe-top {
+      padding-top: max(8px, env(safe-area-inset-top));
+    }
+
+    .safe-bottom {
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+
+    @media (min-width: 640px) {
+      .safe-top {
+        padding-top: max(12px, env(safe-area-inset-top));
+      }
+
+      .safe-bottom {
+        padding-bottom: max(14px, env(safe-area-inset-bottom));
+      }
+    }
+
+    .safe-left {
+      padding-left: max(8px, env(safe-area-inset-left));
+    }
+
+    .safe-right {
+      padding-right: max(8px, env(safe-area-inset-right));
+    }
+
+    /* Crisp Print-Ink Tactile Borders & Hard Offset Shadows (No Glows) */
+    .ink-box {
+      border: 3px solid #18181B;
+      box-shadow: 0 4px 0 #18181B;
+    }
+
+    .ink-btn {
+      border: 3px solid #18181B;
+      box-shadow: 0 4px 0 #18181B;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s ease;
+    }
+
+    .ink-btn:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #18181B;
+    }
+
+    .ink-btn:disabled {
+      opacity: 0.4;
+      box-shadow: 0 2px 0 #18181B;
+    }
+
+    .ink-tab-active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #18181B;
+    }
+
+    /* Comic Viewport Touch & Smooth Transform */
+    #comicViewport {
+      touch-action: none;
+    }
+
+    .comic-transform {
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    .comic-smooth {
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Crisp Ink Spinner */
+    @keyframes spinInk {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ink-spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #E4E4E7;
+      border-top-color: #18181B;
+      border-radius: 9999px;
+      animation: spinInk 0.75s linear infinite;
+    }
+  </style>
+</head>
+<body class="font-sans flex flex-col justify-between bg-paper text-ink">
+  <!-- TOP BAR: Comic Title, Date, Today Shortcut, and iOS Add-to-Home-Screen Button -->
+  <header
+    id="appHeader"
+    class="safe-top safe-left safe-right px-2.5 sm:px-5 pb-1.5 sm:pb-2.5 landscape:py-1 flex items-center justify-between gap-2 shrink-0 z-20 bg-paper"
+  >
+    <!-- Active Comic Title & Date -->
+    <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+      <span
+        id="headerColorDot"
+        class="w-3.5 h-7 sm:w-4 sm:h-8 rounded-md border-2 border-ink bg-peanuts shrink-0"
+        aria-hidden="true"
+      ></span>
+      <div class="min-w-0">
+        <h1
+          id="comicTitle"
+          class="text-lg sm:text-2xl font-extrabold tracking-tight leading-none truncate"
+        >
+          Peanuts
+        </h1>
+        <p
+          id="comicDateLabel"
+          class="text-[11px] sm:text-sm font-bold text-muted mt-0.5 sm:mt-1 truncate"
+        >
+          Loading...
+        </p>
+      </div>
+    </div>
+
+    <!-- Header Action Buttons -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <button
+        id="todayBtn"
+        type="button"
+        onclick="goToToday()"
+        class="hidden ink-btn bg-white text-ink font-extrabold text-xs sm:text-sm px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl uppercase tracking-wide"
+        aria-label="Jump to latest comic strip"
+      >
+        Today
+      </button>
+
+      <button
+        id="installBtn"
+        type="button"
+        onclick="openInstallModal()"
+        class="ink-btn bg-white text-ink font-extrabold text-xs sm:text-sm px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl flex items-center gap-1.5"
+        aria-label="How to save this app to your iPhone or iPad Home Screen"
+      >
+        <svg
+          class="w-4 h-4 stroke-[2.5]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 3v12" />
+          <path d="m8 7 4-4 4 4" />
+          <path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
+        </svg>
+        <span>Get App</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CENTER STAGE: Full-Screen Interactive Comic Reader -->
+  <main class="flex-1 min-h-0 px-1.5 sm:px-5 py-0.5 sm:py-1 flex flex-col relative z-10">
+    <div
+      id="comicViewport"
+      class="ink-box bg-white rounded-2xl sm:rounded-3xl w-full h-full relative overflow-hidden flex items-center justify-center"
+      role="region"
+      aria-label="Comic strip reader. Tap to toggle full screen, double-tap to zoom, swipe left or right to change day."
+    >
+      <!-- Loading State -->
+      <div
+        id="loadingState"
+        class="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center"
+      >
+        <div class="ink-spinner" aria-hidden="true"></div>
+        <p class="text-base sm:text-lg font-extrabold tracking-tight text-ink">
+          Fetching today's comic...
+        </p>
+      </div>
+
+      <!-- Interactive Transform Container (Holds Live Comic Image) -->
+      <div
+        id="comicTransformLayer"
+        class="hidden w-full h-full flex items-center justify-center p-1 sm:p-4 comic-transform comic-smooth"
+      >
+        <img
+          id="comicImage"
+          alt="Daily comic strip"
+          draggable="false"
+          class="hidden w-full h-full object-contain select-none pointer-events-none"
+        />
+      </div>
+
+      <!-- Network Retry State (Shown only when offline with no cached strip) -->
+      <div
+        id="errorState"
+        class="hidden w-full h-full p-6 flex flex-col items-center justify-center text-center gap-4"
+      >
+        <p id="errorMessage" class="text-lg sm:text-xl font-extrabold tracking-tight max-w-sm">
+          Could not load the comic strip. Check your internet connection.
+        </p>
+        <button
+          type="button"
+          onclick="retryLoadComic()"
+          class="ink-btn bg-peanuts text-ink font-extrabold text-base px-6 py-3.5 rounded-2xl uppercase tracking-wide"
+        >
+          Try Again
+        </button>
+      </div>
+
+      <!-- Subtle Mode Indicator Pill (Top-Left inside frame when zoomed) -->
+      <div
+        id="statusPill"
+        class="hidden absolute top-3 left-3 bg-ink text-white text-xs font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-full pointer-events-none"
+      >
+        Drag to Pan
+      </div>
+    </div>
+
+    <!-- Floating Exit Full-Screen Button (Shown only when header/footer are hidden) -->
+    <button
+      id="exitFullscreenBtn"
+      type="button"
+      onclick="toggleChrome(true)"
+      class="hidden fixed bottom-5 right-5 z-30 ink-btn bg-white text-ink font-extrabold text-xs sm:text-sm px-4 py-3 rounded-2xl uppercase tracking-wide"
+      aria-label="Show navigation controls"
+    >
+      Show Controls
+    </button>
+  </main>
+
+  <!-- BOTTOM CONTROLS: Day Navigation + Random + Large 3-Comic Switcher -->
+  <footer
+    id="appFooter"
+    class="safe-bottom safe-left safe-right px-2 sm:px-5 pt-1.5 sm:pt-2 flex flex-col gap-1.5 sm:gap-2.5 shrink-0 z-20 bg-paper"
+  >
+    <!-- Row 1: Older Day / Random / Zoom / Newer Day -->
+    <div class="grid grid-cols-4 gap-1.5 sm:gap-2.5">
+      <button
+        id="prevDayBtn"
+        type="button"
+        onclick="changeDay(-1)"
+        class="ink-btn bg-white text-ink min-h-[46px] sm:min-h-[54px] landscape:min-h-[38px] px-1.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1 sm:gap-1.5 font-extrabold text-xs sm:text-base"
+        aria-label="Previous day's comic"
+      >
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5 stroke-[3] shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        <span>Older</span>
+      </button>
+
+      <button
+        id="randomBtn"
+        type="button"
+        onclick="randomComic()"
+        class="ink-btn bg-white text-ink min-h-[46px] sm:min-h-[54px] landscape:min-h-[38px] px-1.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1 sm:gap-1.5 font-extrabold text-xs sm:text-base"
+        aria-label="Pick a random comic strip"
+      >
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.75] shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M16 3h5v5" />
+          <path d="M4 20 21 3" />
+          <path d="M21 16v5h-5" />
+          <path d="M15 15l6 6" />
+          <path d="M4 4l5 5" />
+        </svg>
+        <span>Random</span>
+      </button>
+
+      <button
+        id="zoomBtn"
+        type="button"
+        onclick="toggleZoomMode()"
+        class="ink-btn bg-white text-ink min-h-[46px] sm:min-h-[54px] landscape:min-h-[38px] px-1.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1 sm:gap-1.5 font-extrabold text-xs sm:text-base"
+        aria-label="Zoom in or fit comic strip"
+      >
+        <svg
+          id="zoomIcon"
+          class="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.75] shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+          <path d="M11 8v6" />
+          <path d="M8 11h6" />
+        </svg>
+        <span id="zoomBtnLabel">Zoom</span>
+      </button>
+
+      <button
+        id="nextDayBtn"
+        type="button"
+        onclick="changeDay(1)"
+        disabled
+        class="ink-btn bg-white text-ink min-h-[46px] sm:min-h-[54px] landscape:min-h-[38px] px-1.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1 sm:gap-1.5 font-extrabold text-xs sm:text-base"
+        aria-label="Newer day's comic"
+      >
+        <span>Newer</span>
+        <svg
+          class="w-4 h-4 sm:w-5 sm:h-5 stroke-[3] shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Row 2: Large Child-Friendly 3-Comic Switcher -->
+    <nav class="grid grid-cols-3 gap-1.5 sm:gap-2.5" aria-label="Choose a daily comic">
+      <button
+        id="tab-peanuts"
+        type="button"
+        onclick="selectComic('peanuts')"
+        class="ink-btn ink-tab-active bg-peanuts text-ink min-h-[46px] sm:min-h-[58px] landscape:min-h-[38px] px-1.5 sm:px-2 rounded-xl sm:rounded-2xl flex flex-row items-center justify-center gap-1.5 sm:gap-2 font-extrabold text-[11px] sm:text-sm uppercase tracking-tight leading-tight text-center"
+      >
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-ink bg-white shrink-0"></span>
+        <span>Peanuts</span>
+      </button>
+
+      <button
+        id="tab-garfield"
+        type="button"
+        onclick="selectComic('garfield')"
+        class="ink-btn bg-white text-ink min-h-[46px] sm:min-h-[58px] landscape:min-h-[38px] px-1.5 sm:px-2 rounded-xl sm:rounded-2xl flex flex-row items-center justify-center gap-1.5 sm:gap-2 font-extrabold text-[11px] sm:text-sm uppercase tracking-tight leading-tight text-center"
+      >
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-ink bg-garfield shrink-0"></span>
+        <span>Garfield</span>
+      </button>
+
+      <button
+        id="tab-calvinandhobbes"
+        type="button"
+        onclick="selectComic('calvinandhobbes')"
+        class="ink-btn bg-white text-ink min-h-[46px] sm:min-h-[58px] landscape:min-h-[38px] px-1.5 sm:px-2 rounded-xl sm:rounded-2xl flex flex-row items-center justify-center gap-1.5 sm:gap-2 font-extrabold text-[11px] sm:text-sm uppercase tracking-tight leading-tight text-center"
+      >
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-ink bg-calvin shrink-0"></span>
+        <span>Calvin &amp; Hobbes</span>
+      </button>
+    </nav>
+  </footer>
+
+  <!-- iOS ADD TO HOME SCREEN GUIDE MODAL -->
+  <div
+    id="installModal"
+    class="hidden fixed inset-0 z-50 bg-ink/60 flex items-end sm:items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="installModalTitle"
+  >
+    <div class="ink-box bg-paper rounded-3xl w-full max-w-md p-6 flex flex-col gap-5">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="installModalTitle" class="text-xl sm:text-2xl font-extrabold tracking-tight">
+            Install on iPhone or iPad
+          </h2>
+          <p class="text-sm font-bold text-muted mt-1">
+            Save Daily Comics to your Home Screen so it opens full-screen like a real app.
+          </p>
+        </div>
+        <button
+          type="button"
+          onclick="closeInstallModal()"
+          class="ink-btn bg-white text-ink w-10 h-10 rounded-xl flex items-center justify-center font-extrabold shrink-0"
+          aria-label="Close instructions"
+        >
+          X
+        </button>
+      </div>
+
+      <ol class="flex flex-col gap-3 text-sm sm:text-base font-bold">
+        <li class="bg-white border-2 border-ink rounded-2xl p-3.5 flex items-center gap-3">
+          <span class="w-8 h-8 rounded-xl bg-peanuts border-2 border-ink flex items-center justify-center font-extrabold shrink-0">
+            1
+          </span>
+          <span>Open this page in <strong>Safari</strong> on your iPhone or iPad.</span>
+        </li>
+        <li class="bg-white border-2 border-ink rounded-2xl p-3.5 flex items-center gap-3">
+          <span class="w-8 h-8 rounded-xl bg-garfield border-2 border-ink flex items-center justify-center font-extrabold shrink-0">
+            2
+          </span>
+          <span>Tap the <strong>Share</strong> button (square with an arrow pointing up).</span>
+        </li>
+        <li class="bg-white border-2 border-ink rounded-2xl p-3.5 flex items-center gap-3">
+          <span class="w-8 h-8 rounded-xl bg-calvin border-2 border-ink flex items-center justify-center font-extrabold shrink-0">
+            3
+          </span>
+          <span>Scroll down and tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</span>
+        </li>
+      </ol>
+
+      <button
+        type="button"
+        onclick="closeInstallModal()"
+        class="ink-btn bg-peanuts text-ink font-extrabold text-base py-3.5 rounded-2xl uppercase tracking-wide w-full"
+      >
+        Got It
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const FEED_CACHE_KEY = 'daily_comics_feeds_v1';
+
+    const COMICS = {
+      peanuts: {
+        slug: 'peanuts',
+        name: 'Peanuts',
+        colorClass: 'bg-peanuts',
+      },
+      garfield: {
+        slug: 'garfield',
+        name: 'Garfield',
+        colorClass: 'bg-garfield',
+      },
+      calvinandhobbes: {
+        slug: 'calvinandhobbes',
+        name: 'Calvin & Hobbes',
+        colorClass: 'bg-calvin',
+      },
+    };
+
+    const state = {
+      feeds: loadFeedsFromStorage(),
+      feedFetchPromises: {},
+      activeComic: 'peanuts',
+      stripIndex: 0,
+      loadRequestId: 0,
+      chromeVisible: true,
+      isZoomed: false,
+      scale: 1,
+      panX: 0,
+      panY: 0,
+    };
+
+    let elHeader = null;
+    let elFooter = null;
+    let elHeaderColorDot = null;
+    let elComicTitle = null;
+    let elComicDateLabel = null;
+    let elTodayBtn = null;
+    let elInstallBtn = null;
+    let elComicViewport = null;
+    let elLoadingState = null;
+    let elTransformLayer = null;
+    let elComicImage = null;
+    let elErrorState = null;
+    let elStatusPill = null;
+    let elExitFullscreenBtn = null;
+    let elPrevDayBtn = null;
+    let elNextDayBtn = null;
+    let elZoomBtn = null;
+    let elZoomIcon = null;
+    let elZoomBtnLabel = null;
+
+    /**
+     * Bind all interactive DOM references once the document is ready
+     */
+    function bindDomElements() {
+      elHeader = document.getElementById('appHeader');
+      elFooter = document.getElementById('appFooter');
+      elHeaderColorDot = document.getElementById('headerColorDot');
+      elComicTitle = document.getElementById('comicTitle');
+      elComicDateLabel = document.getElementById('comicDateLabel');
+      elTodayBtn = document.getElementById('todayBtn');
+      elInstallBtn = document.getElementById('installBtn');
+      elComicViewport = document.getElementById('comicViewport');
+      elLoadingState = document.getElementById('loadingState');
+      elTransformLayer = document.getElementById('comicTransformLayer');
+      elComicImage = document.getElementById('comicImage');
+      elErrorState = document.getElementById('errorState');
+      elStatusPill = document.getElementById('statusPill');
+      elExitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+      elPrevDayBtn = document.getElementById('prevDayBtn');
+      elNextDayBtn = document.getElementById('nextDayBtn');
+      elZoomBtn = document.getElementById('zoomBtn');
+      elZoomIcon = document.getElementById('zoomIcon');
+      elZoomBtnLabel = document.getElementById('zoomBtnLabel');
+    }
+
+    /**
+     * Configure Web Manifest for Home Screen installation using apple-touch-icon.png
+     */
+    function setupIosAppMetadata() {
+      try {
+        const manifestObj = {
+          name: 'Daily Comics',
+          short_name: 'Comics',
+          start_url: '.',
+          display: 'standalone',
+          background_color: '#FAF7F0',
+          theme_color: '#FAF7F0',
+          icons: [
+            {
+              src: 'apple-touch-icon.png',
+              sizes: '180x180',
+              type: 'image/png',
+            },
+          ],
+        };
+        const manifestUrl =
+          'data:application/manifest+json;charset=utf-8,' +
+          encodeURIComponent(JSON.stringify(manifestObj));
+        const manifestEl = document.getElementById('webManifest');
+        if (manifestEl) manifestEl.href = manifestUrl;
+      } catch (err) {
+        // Safe fallback if browser restricts data-URI manifest
+      }
+    }
+
+    /**
+     * Load cached real strip lists from localStorage
+     */
+    function loadFeedsFromStorage() {
+      try {
+        const raw = localStorage.getItem(FEED_CACHE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return {
+          peanuts: Array.isArray(parsed.peanuts) ? parsed.peanuts : [],
+          garfield: Array.isArray(parsed.garfield) ? parsed.garfield : [],
+          calvinandhobbes: Array.isArray(parsed.calvinandhobbes) ? parsed.calvinandhobbes : [],
+        };
+      } catch (err) {
+        return { peanuts: [], garfield: [], calvinandhobbes: [] };
+      }
+    }
+
+    /**
+     * Persist fetched strip metadata to localStorage
+     */
+    function saveFeedsToStorage() {
+      try {
+        localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(state.feeds));
+      } catch (err) {
+        // Ignore storage quota errors in Private Browsing
+      }
+    }
+
+    /**
+     * Format an ISO date string (YYYY-MM-DD) into a clear child-friendly label
+     */
+    function formatStripDateLabel(dateIso, index) {
+      if (!dateIso) {
+        return index === 0 ? 'Latest Strip' : `${index} Days Ago`;
+      }
+      const parts = dateIso.split('-').map(Number);
+      if (parts.length !== 3 || parts.some(isNaN)) {
+        return dateIso;
+      }
+      const stripDate = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+      const formatted = stripDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+      const diffDays = Math.round((today - stripDate) / 86400000);
+
+      if (diffDays === 0) return `Today • ${formatted}`;
+      if (diffDays === 1) return `Yesterday • ${formatted}`;
+      return formatted;
+    }
+
+    /**
+     * Fetch with AbortController timeout
+     */
+    async function fetchWithTimeout(url, timeoutMs = 6500) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        return res;
+      } catch (err) {
+        clearTimeout(timer);
+        throw err;
+      }
+    }
+
+    /**
+     * Extract GoComics/AMUniversal strip image URL from HTML or XML text
+     */
+    function extractComicImageUrl(rawText) {
+      if (!rawText) return null;
+      const match = rawText.match(
+        /https:\/\/(?:featureassets\.gocomics\.com\/assets|assets\.amuniversal\.com)\/[a-zA-Z0-9_-]+/
+      );
+      return match ? match[0] : null;
+    }
+
+    /**
+     * Extract YYYY-MM-DD date from item title or pubDate
+     */
+    function extractItemDateIso(titleText, pubDateText) {
+      const titleIsoMatch = (titleText || '').match(/(\d{4}-\d{2}-\d{2})/);
+      if (titleIsoMatch) return titleIsoMatch[1];
+
+      if (pubDateText) {
+        const d = new Date(pubDateText.trim());
+        if (!isNaN(d.getTime())) {
+          const y = d.getUTCFullYear();
+          const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(d.getUTCDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        }
+      }
+      return '';
+    }
+
+    /**
+     * Parse RSS XML text into sorted strip entries [{ dateIso, imageUrl }]
+     */
+    function parseRssXmlToStrips(xmlText) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, 'text/xml');
+      const items = doc.querySelectorAll('item');
+      const entries = [];
+      const seenUrls = new Set();
+
+      items.forEach((item) => {
+        const title = item.querySelector('title')?.textContent || '';
+        const pubDate = item.querySelector('pubDate')?.textContent || '';
+        const desc = item.querySelector('description')?.textContent || '';
+        const enclosureUrl = item.querySelector('enclosure')?.getAttribute('url') || '';
+
+        const imageUrl =
+          extractComicImageUrl(enclosureUrl) ||
+          extractComicImageUrl(desc) ||
+          extractComicImageUrl(item.innerHTML || '');
+
+        if (imageUrl && !seenUrls.has(imageUrl)) {
+          seenUrls.add(imageUrl);
+          entries.push({
+            dateIso: extractItemDateIso(title, pubDate),
+            imageUrl,
+          });
+        }
+      });
+
+      entries.sort((a, b) => (b.dateIso || '').localeCompare(a.dateIso || ''));
+      return entries;
+    }
+
+    /**
+     * Fetch the live daily RSS/JSON feed for a comic series with CORS-safe fallbacks
+     */
+    async function loadComicFeed(slug, forceRefresh = false) {
+      if (!forceRefresh && state.feedFetchPromises[slug]) {
+        return state.feedFetchPromises[slug];
+      }
+
+      const fetchTask = (async () => {
+        const rssUrl = `https://comiccaster.xyz/rss/${slug}`;
+        const xmlSources = [
+          rssUrl,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`,
+          `https://corsproxy.io/?url=${encodeURIComponent(rssUrl)}`,
+          `https://raw.githubusercontent.com/adamprime/comiccaster/main/public/feeds/${slug}.xml`,
+        ];
+
+        // 1. Try XML feeds (direct + CORS relays)
+        for (const sourceUrl of xmlSources) {
+          try {
+            const res = await fetchWithTimeout(sourceUrl, 6000);
+            if (res.ok) {
+              const xmlText = await res.text();
+              const parsed = parseRssXmlToStrips(xmlText);
+              if (parsed.length > 0) {
+                state.feeds[slug] = parsed;
+                saveFeedsToStorage();
+                return parsed;
+              }
+            }
+          } catch (err) {
+            // Try next API endpoint
+          }
+        }
+
+        // 2. Try rss2json API fallback
+        try {
+          const jsonApiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+          const res = await fetchWithTimeout(jsonApiUrl, 6500);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.items)) {
+              const parsed = [];
+              const seenUrls = new Set();
+              data.items.forEach((item) => {
+                const imageUrl =
+                  extractComicImageUrl(item.enclosure?.link) ||
+                  extractComicImageUrl(item.thumbnail) ||
+                  extractComicImageUrl(item.description) ||
+                  extractComicImageUrl(item.content);
+                if (imageUrl && !seenUrls.has(imageUrl)) {
+                  seenUrls.add(imageUrl);
+                  parsed.push({
+                    dateIso: extractItemDateIso(item.title, item.pubDate),
+                    imageUrl,
+                  });
+                }
+              });
+              if (parsed.length > 0) {
+                parsed.sort((a, b) => (b.dateIso || '').localeCompare(a.dateIso || ''));
+                state.feeds[slug] = parsed;
+                saveFeedsToStorage();
+                return parsed;
+              }
+            }
+          }
+        } catch (err) {
+          // Fall back to any cached strips already stored locally
+        }
+
+        return state.feeds[slug] || [];
+      })();
+
+      state.feedFetchPromises[slug] = fetchTask;
+      return fetchTask;
+    }
+
+    /**
+     * Display the image for a resolved real comic strip entry
+     */
+    function displayRealStripImage(requestId, comic, strip, index, totalCount) {
+      if (!elComicDateLabel || !elComicImage) return;
+
+      elComicDateLabel.textContent = formatStripDateLabel(strip.dateIso, index);
+      if (elPrevDayBtn) elPrevDayBtn.disabled = totalCount > 0 && index >= totalCount - 1;
+      if (elNextDayBtn) elNextDayBtn.disabled = index <= 0;
+
+      const loaderImg = new Image();
+      loaderImg.onload = () => {
+        if (requestId !== state.loadRequestId) return;
+        elComicImage.src = strip.imageUrl;
+        elComicImage.alt = `${comic.name} comic strip (${strip.dateIso || 'daily'})`;
+        elLoadingState?.classList.add('hidden');
+        elErrorState?.classList.add('hidden');
+        elComicImage.classList.remove('hidden');
+        elTransformLayer?.classList.remove('hidden');
+      };
+      loaderImg.onerror = () => {
+        if (requestId !== state.loadRequestId) return;
+        showErrorState();
+      };
+      loaderImg.src = strip.imageUrl;
+    }
+
+    /**
+     * Show honest retry state only when offline & no cached strip is available
+     */
+    function showErrorState() {
+      elLoadingState?.classList.add('hidden');
+      elTransformLayer?.classList.add('hidden');
+      elComicImage?.classList.add('hidden');
+      elErrorState?.classList.remove('hidden');
+    }
+
+    /**
+     * Render active comic & selected day index
+     */
+    async function renderActiveComic(forceRefresh = false) {
+      const requestId = ++state.loadRequestId;
+      const slug = state.activeComic;
+      const comic = COMICS[slug];
+
+      resetZoom(false);
+
+      // Update Header & Tab Styles
+      if (elComicTitle) elComicTitle.textContent = comic.name;
+      if (elHeaderColorDot) {
+        elHeaderColorDot.className = `w-3.5 h-7 sm:w-4 sm:h-8 rounded-md border-2 border-ink ${comic.colorClass} shrink-0`;
+      }
+
+      if (state.stripIndex > 0) {
+        elTodayBtn?.classList.remove('hidden');
+        if (elNextDayBtn) elNextDayBtn.disabled = false;
+      } else {
+        elTodayBtn?.classList.add('hidden');
+        if (elNextDayBtn) elNextDayBtn.disabled = true;
+      }
+
+      Object.keys(COMICS).forEach((key) => {
+        const tab = document.getElementById(`tab-${key}`);
+        if (!tab) return;
+        if (key === slug) {
+          tab.className = `ink-btn ink-tab-active ${COMICS[key].colorClass} text-ink min-h-[46px] sm:min-h-[58px] landscape:min-h-[38px] px-1.5 sm:px-2 rounded-xl sm:rounded-2xl flex flex-row items-center justify-center gap-1.5 sm:gap-2 font-extrabold text-[11px] sm:text-sm uppercase tracking-tight leading-tight text-center`;
+        } else {
+          tab.className = `ink-btn bg-white text-ink min-h-[46px] sm:min-h-[58px] landscape:min-h-[38px] px-1.5 sm:px-2 rounded-xl sm:rounded-2xl flex flex-row items-center justify-center gap-1.5 sm:gap-2 font-extrabold text-[11px] sm:text-sm uppercase tracking-tight leading-tight text-center`;
+        }
+      });
+
+      // Show cached strip immediately if available while fresh feed updates
+      const cachedList = state.feeds[slug] || [];
+      const hasCachedTarget = cachedList.length > 0 && state.stripIndex < cachedList.length;
+
+      if (hasCachedTarget) {
+        displayRealStripImage(
+          requestId,
+          comic,
+          cachedList[state.stripIndex],
+          state.stripIndex,
+          cachedList.length
+        );
+      } else {
+        if (elComicDateLabel) elComicDateLabel.textContent = 'Loading...';
+        elErrorState?.classList.add('hidden');
+        elTransformLayer?.classList.add('hidden');
+        elComicImage?.classList.add('hidden');
+        elLoadingState?.classList.remove('hidden');
+      }
+
+      // Fetch live feed from API
+      const latestList = await loadComicFeed(slug, forceRefresh);
+      if (requestId !== state.loadRequestId) return;
+
+      if (!latestList || latestList.length === 0) {
+        if (!hasCachedTarget) {
+          showErrorState();
+        }
+        return;
+      }
+
+      if (state.stripIndex >= latestList.length) {
+        state.stripIndex = latestList.length - 1;
+      }
+
+      const targetStrip = latestList[state.stripIndex];
+      if (!hasCachedTarget || cachedList[state.stripIndex]?.imageUrl !== targetStrip.imageUrl) {
+        displayRealStripImage(requestId, comic, targetStrip, state.stripIndex, latestList.length);
+      } else {
+        elComicDateLabel.textContent = formatStripDateLabel(
+          targetStrip.dateIso,
+          state.stripIndex
+        );
+        if (elPrevDayBtn) elPrevDayBtn.disabled = state.stripIndex >= latestList.length - 1;
+        if (elNextDayBtn) elNextDayBtn.disabled = state.stripIndex <= 0;
+      }
+    }
+
+    /**
+     * Switch active comic series
+     */
+    function selectComic(slug) {
+      if (!COMICS[slug]) return;
+      if (state.activeComic === slug && state.stripIndex === 0) return;
+      state.activeComic = slug;
+      state.stripIndex = 0;
+      renderActiveComic(false);
+    }
+
+    /**
+     * Step backward (-1 = Older) or forward (+1 = Newer) through days
+     */
+    function changeDay(delta) {
+      const list = state.feeds[state.activeComic] || [];
+      const maxIndex = Math.max(0, list.length - 1);
+      const nextIndex = state.stripIndex - delta;
+      if (nextIndex < 0 || (list.length > 0 && nextIndex > maxIndex)) return;
+      state.stripIndex = nextIndex;
+      renderActiveComic(false);
+    }
+
+    /**
+     * Retry loading the current strip after a network error
+     */
+    function retryLoadComic() {
+      renderActiveComic(true);
+    }
+
+    /**
+     * Jump straight back to the newest daily strip
+     */
+    function goToToday() {
+      if (state.stripIndex === 0) return;
+      state.stripIndex = 0;
+      renderActiveComic(false);
+    }
+
+    /**
+     * Jump to a random strip across Peanuts, Garfield, and Calvin & Hobbes
+     */
+    async function randomComic() {
+      const slugs = Object.keys(COMICS);
+      const missingSlugs = slugs.filter((s) => !state.feeds[s] || state.feeds[s].length === 0);
+      if (missingSlugs.length > 0) {
+        await Promise.allSettled(missingSlugs.map((s) => loadComicFeed(s, false)));
+      }
+
+      const candidates = [];
+      slugs.forEach((slug) => {
+        const list = state.feeds[slug] || [];
+        for (let i = 0; i < list.length; i += 1) {
+          if (!(slug === state.activeComic && i === state.stripIndex)) {
+            candidates.push({ slug, index: i });
+          }
+        }
+      });
+
+      if (candidates.length === 0) {
+        renderActiveComic(true);
+        return;
+      }
+
+      const pick = candidates[Math.floor(Math.random() * candidates.length)];
+      state.activeComic = pick.slug;
+      state.stripIndex = pick.index;
+      renderActiveComic(false);
+    }
+
+    /**
+     * Toggle Top & Bottom UI Chrome for Full-Screen Reading
+     */
+    function toggleChrome(forceVisible) {
+      state.chromeVisible =
+        typeof forceVisible === 'boolean' ? forceVisible : !state.chromeVisible;
+
+      if (state.chromeVisible) {
+        elHeader?.classList.remove('hidden');
+        elFooter?.classList.remove('hidden');
+        elExitFullscreenBtn?.classList.add('hidden');
+      } else {
+        elHeader?.classList.add('hidden');
+        elFooter?.classList.add('hidden');
+        elExitFullscreenBtn?.classList.remove('hidden');
+      }
+    }
+
+    /**
+     * Clamp pan coordinates so the comic stays comfortably inside the viewport
+     */
+    function clampPan(x, y, scale) {
+      if (!elComicViewport || scale <= 1.02) {
+        return { x: 0, y: 0 };
+      }
+      const rect = elComicViewport.getBoundingClientRect();
+      const maxX = ((scale - 1) * rect.width) / 2;
+      const maxY = ((scale - 1) * rect.height) / 2;
+      return {
+        x: Math.max(-maxX, Math.min(maxX, x)),
+        y: Math.max(-maxY, Math.min(maxY, y)),
+      };
+    }
+
+    /**
+     * Apply current zoom & pan transform to the comic container
+     */
+    function applyTransform(smooth = true) {
+      if (!elTransformLayer) return;
+      if (smooth) {
+        elTransformLayer.classList.add('comic-smooth');
+      } else {
+        elTransformLayer.classList.remove('comic-smooth');
+      }
+      elTransformLayer.style.transform = `translate3d(${state.panX}px, ${state.panY}px, 0) scale(${state.scale})`;
+    }
+
+    /**
+     * Reset zoom & pan to default 1x fit
+     */
+    function resetZoom(smooth = true) {
+      state.isZoomed = false;
+      state.scale = 1;
+      state.panX = 0;
+      state.panY = 0;
+      applyTransform(smooth);
+      updateZoomButtonUI();
+    }
+
+    /**
+     * Toggle between 1x Fit and 2.1x Zoomed Reading Mode
+     */
+    function toggleZoomMode(focalClientX = null, focalClientY = null) {
+      if (state.scale > 1.05) {
+        resetZoom(true);
+        return;
+      }
+
+      const targetScale = 2.1;
+      state.isZoomed = true;
+      state.scale = targetScale;
+
+      if (
+        focalClientX !== null &&
+        focalClientY !== null &&
+        elComicViewport
+      ) {
+        const rect = elComicViewport.getBoundingClientRect();
+        const offsetX = focalClientX - (rect.left + rect.width / 2);
+        const offsetY = focalClientY - (rect.top + rect.height / 2);
+        const clamped = clampPan(
+          -offsetX * (targetScale - 1) * 0.7,
+          -offsetY * (targetScale - 1) * 0.7,
+          targetScale
+        );
+        state.panX = clamped.x;
+        state.panY = clamped.y;
+      } else {
+        state.panX = 0;
+        state.panY = 0;
+      }
+
+      applyTransform(true);
+      updateZoomButtonUI();
+    }
+
+    /**
+     * Sync Zoom Button Appearance & Status Pill
+     */
+    function updateZoomButtonUI() {
+      if (!elZoomBtnLabel || !elZoomBtn || !elZoomIcon) return;
+      if (state.scale > 1.05) {
+        elZoomBtnLabel.textContent = 'Fit';
+        elZoomBtn.classList.remove('bg-white');
+        elZoomBtn.classList.add('bg-peanuts');
+        elZoomIcon.innerHTML = `
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+          <path d="M8 11h6" />
+        `;
+        updateStatusPill('Drag to Pan');
+      } else {
+        elZoomBtnLabel.textContent = 'Zoom';
+        elZoomBtn.classList.remove('bg-peanuts');
+        elZoomBtn.classList.add('bg-white');
+        elZoomIcon.innerHTML = `
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+          <path d="M11 8v6" />
+          <path d="M8 11h6" />
+        `;
+        updateStatusPill(null);
+      }
+    }
+
+    function updateStatusPill(text) {
+      if (!elStatusPill) return;
+      if (text) {
+        elStatusPill.textContent = text;
+        elStatusPill.classList.remove('hidden');
+      } else {
+        elStatusPill.classList.add('hidden');
+      }
+    }
+
+    /**
+     * Touch & Mouse Gestures:
+     * - Single Tap: Toggle full-screen chrome
+     * - Double Tap: Zoom in / Fit strip
+     * - Horizontal Swipe (at 1x): Older / Newer day
+     * - Drag (when zoomed): Pan smoothly across comic panels
+     */
+    function initGestures() {
+      if (!elComicViewport) return;
+
+      let pointerDown = false;
+      let startX = 0;
+      let startY = 0;
+      let startPanX = 0;
+      let startPanY = 0;
+      let moved = false;
+      let downTime = 0;
+      let lastTapTime = 0;
+      let singleTapTimer = null;
+
+      elComicViewport.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('button')) return;
+        pointerDown = true;
+        moved = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        startPanX = state.panX;
+        startPanY = state.panY;
+        downTime = Date.now();
+        elTransformLayer?.classList.remove('comic-smooth');
+      });
+
+      elComicViewport.addEventListener('pointermove', (e) => {
+        if (!pointerDown) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        if (Math.hypot(dx, dy) > 8) {
+          moved = true;
+        }
+
+        if (state.scale > 1.05 && moved) {
+          const clamped = clampPan(startPanX + dx, startPanY + dy, state.scale);
+          state.panX = clamped.x;
+          state.panY = clamped.y;
+          applyTransform(false);
+        }
+      });
+
+      const handlePointerRelease = (e) => {
+        if (!pointerDown) return;
+        pointerDown = false;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const elapsed = Date.now() - downTime;
+
+        // Horizontal Swipe when not zoomed
+        if (
+          state.scale <= 1.05 &&
+          moved &&
+          Math.abs(dx) > 55 &&
+          Math.abs(dx) > Math.abs(dy) * 1.4 &&
+          elapsed < 600
+        ) {
+          if (dx < 0) {
+            changeDay(-1); // Swipe left -> Older strip
+          } else {
+            changeDay(1); // Swipe right -> Newer strip
+          }
+          return;
+        }
+
+        // Tap / Double-Tap detection
+        if (!moved && elapsed < 320) {
+          const now = Date.now();
+          if (now - lastTapTime < 280) {
+            clearTimeout(singleTapTimer);
+            lastTapTime = 0;
+            toggleZoomMode(e.clientX, e.clientY);
+          } else {
+            lastTapTime = now;
+            singleTapTimer = setTimeout(() => {
+              toggleChrome();
+            }, 260);
+          }
+        }
+      };
+
+      elComicViewport.addEventListener('pointerup', handlePointerRelease);
+      elComicViewport.addEventListener('pointercancel', () => {
+        pointerDown = false;
+      });
+    }
+
+    // Keyboard Shortcuts for Desktop & iPad Keyboard Users
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') changeDay(-1);
+      if (e.key === 'ArrowRight') changeDay(1);
+      if (e.key === 'r' || e.key === 'R') randomComic();
+      if (e.key === '1') selectComic('peanuts');
+      if (e.key === '2') selectComic('garfield');
+      if (e.key === '3') selectComic('calvinandhobbes');
+      if (e.key === 'Escape') {
+        closeInstallModal();
+        if (!state.chromeVisible) toggleChrome(true);
+      }
+    });
+
+    /**
+     * Install Guide Modal Controls
+     */
+    function openInstallModal() {
+      document.getElementById('installModal')?.classList.remove('hidden');
+    }
+
+    function closeInstallModal() {
+      document.getElementById('installModal')?.classList.add('hidden');
+    }
+
+    /**
+     * Hide the "Get App" button automatically when already running as an
+     * installed iOS Home Screen Web App (standalone mode)
+     */
+    function checkStandaloneMode() {
+      const isIosStandalone = window.navigator.standalone === true;
+      const isDisplayStandalone =
+        window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+      if (isIosStandalone || isDisplayStandalone) {
+        elInstallBtn?.classList.add('hidden');
+      }
+    }
+
+    // Initialize Application Safely After DOM Ready
+    function initApp() {
+      bindDomElements();
+      setupIosAppMetadata();
+      checkStandaloneMode();
+      initGestures();
+      renderActiveComic(true);
+      loadComicFeed('garfield', true);
+      loadComicFeed('calvinandhobbes', true);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>
